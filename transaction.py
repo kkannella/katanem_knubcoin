@@ -16,10 +16,10 @@ import random
 import wallet
 
 class Transaction:
-	
-    def __init__(self, sender_address, sender_private_key, recipient_address, value):
 
-	
+    def __init__(self, sender_address, sender_private_key, recipient_address, value ):
+
+
         ##set
         #self.sender_address: To public key του wallet από το οποίο προέρχονται τα χρήματα
         self.sender_address=sender_address
@@ -32,16 +32,16 @@ class Transaction:
         self.transaction_id=SHA256.new(data=myid)
         #self.transaction_inputs: λίστα από Transaction Input
         #self.transaction_inputs=
-        #self.transaction_outputs: λίστα από Transaction Output 
+        #self.transaction_outputs: λίστα από Transaction Output
         #selfSignature
         self.signature=PKCS1_v1_5.new(sender_private_key).sign(self.transaction_id)
 
-	
-    
+
+
 
 
     def to_dict(self):
-       return 1 
+       return 1
 
 #    def sign_transaction(self):
 #       return 1

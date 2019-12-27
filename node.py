@@ -1,22 +1,29 @@
 import block
 import wallet
 
+import Crypto
+import Crypto.Random
+from Crypto.Hash import SHA
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.Cipher import PKCS1_OAEP
 class node:
-	
+
 	def __init__(self):
 		#self.NBC=100?
 		##set
-		self.wallet=None	
+		self.wallet=None
 		#self.chain
 		#self.NBCs
+		self.UTXOs = []
 		self.current_id_count=0
 		self.ring_id=[] #make new list we will add nodes later
 		self.ring_ip=[]
 		self.ring_port=[]
 		self.ring_public_key=[]
 		self.ring_balance=[]
-		#slef.ring[]   #here we store information for every node, as its id, its address (ip:port) its public key and its balance 
-		
+		#slef.ring[]   #here we store information for every node, as its id, its address (ip:port) its public key and its balance
+
 	def create_new_block(self,index,prvHash):
 		return block.Block(index,prvHash)
 
@@ -31,22 +38,32 @@ class node:
 		self.ring_ip.append(ip)
 		self.ring_port.append(port)
 		self.ring_public_key.append(pubk)
-		
-	def create_transaction(sender, receiver, signature):
+		self.UTXOs.append([])
+
+	def create_transaction(sender, receiver,signature):
 		#remember to broadcast it
+
 		return 1
 
 	def broadcast_transaction():
-		
+
 		return 1
 
 
 
 
-	def validate_transaction():
+	def validate_transaction(self,transaction):
 		#use of signature and NBCs balance
+		sender_adress=transaction.sender_address
+		h=transaction.transaction_id
+		signature=transaction.signature
+		pubkey=RSA.importKey(self.ring_public_key[self.ring_ip.index(sender_adress)].encode('ascii'))
+		try:
+			PKCS1_v1_5.new(pubkey).verify(h, signature)
+			return True
+		except(ValueError,TypeError):
+			return False
 
-		return 1
 	def add_transaction_to_block():
 		#if enough transactions  mine
 		return 1
@@ -59,12 +76,12 @@ class node:
 	def broadcast_block():
 		return 1
 
-		
+
 
 ##	def valid_proof(.., difficulty=MINING_DIFFICULTY):
 ##		return 1
-	
-	
+
+
 	#concencus functions
 
 	def valid_chain(self, chain):
