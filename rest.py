@@ -54,7 +54,7 @@ def b_cast(ip_list,port_list):
 	print("Starting gen block")
 	
 	gen_block=new_node.create_new_block(0,1)
-	
+	gen_trans
 	print(gen_block.index)
 	
 	print("Finished thread")
