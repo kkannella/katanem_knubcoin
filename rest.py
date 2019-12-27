@@ -19,7 +19,7 @@ import time
 import node
 import blockchain
 import wallet
-#import transaction
+import transaction
 #import wallet
 
 
@@ -50,12 +50,7 @@ def b_cast(ip_list,port_list):
 		r_b_cast= requests.post(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/apply_lists",json=parameters)
 		result=r_b_cast.json()
 		print(result['id_count'])	
-	##Create genesis block
-	print("Starting gen block")
 	
-	gen_block=new_node.create_new_block(0,1)
-	gen_trans
-	print(gen_block.index)
 	
 	print("Finished thread")
 #.......................................................................................
@@ -124,10 +119,13 @@ def register_node():
 	idc=new_node.get_id_count()
 	new_node.register_node_to_ring(idc,addr,port,pubk)
 	response={'id_count':idc}
+	##if all nodes have been added broadcast them
 	if idc==4:
 		##broadcast ring list with thread function
 		start_new_thread(b_cast,(new_node.ring_ip,new_node.ring_port))
-
+	##sent to new node coins
+	
+	
 	return jsonify(response), 200
 
 
@@ -157,6 +155,21 @@ if __name__ == '__main__':
 		new_node.ring_port.append(port)
 		public_key_string=new_wallet.get_public_key().exportKey("PEM").decode('ascii')
 		new_node.ring_public_key.append(public_key_string)
+		
+		##Create genesis block
+		print("Starting gen block")	
+		
+		gen_block=new_node.create_new_block(0,1)
+		gen_trans=new_node.create_transaction()
+		#gen_trans=transaction.Transaction(ip,new_wallet.private_key,ip,500)
+		gen_block.add_transaction(gen_trans)
+	
+		print("finished gen block")
+		##add gen block to blockchain
+		
+		
+		
+		
 	else:
 		new_node=node.node()
 		#pass ip as param

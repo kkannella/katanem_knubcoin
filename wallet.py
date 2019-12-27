@@ -41,6 +41,6 @@ class wallet:
 				
 	def get_public_key(self):
 		return self.public_key
-		
+	
 	def get_address(self):
 		return self.address
