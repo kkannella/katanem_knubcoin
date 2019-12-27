@@ -18,12 +18,6 @@ class Transaction:
 
     def __init__(self, sender_address, sender_private_key, recipient_address, value):
         ##set
-<<<<<<< HEAD
-=======
-	
-	
-	
->>>>>>> 951e78c1c168b7d9e8e3efc9d338524befc095e3
         #self.sender_address: To public key του wallet από το οποίο προέρχονται τα χρήματα
         self.sender_address=sender_address
         #self.recipient_address: To public key του wallet στο οποίο θα καταλήξουν τα χρήματα
