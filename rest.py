@@ -15,13 +15,11 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Cipher import PKCS1_OAEP
 
 import time
-#import block
+import block
 import node
 import blockchain
 import wallet
 import transaction
-#import wallet
-
 
 ### JUST A BASIC EXAMPLE OF A REST API WITH FLASK
 
@@ -30,7 +28,7 @@ ultra_lock = threading.Lock()
 
 app = Flask(__name__)
 CORS(app)
-#blockchain = Blockchain()
+blockchain = blockchain.blockchain()
 
 ##-----thread functions
 def b_cast(ip_list,port_list):
@@ -163,6 +161,9 @@ if __name__ == '__main__':
 		#gen_trans=new_node.create_transaction()
 		gen_trans=transaction.Transaction(ip,new_wallet.private_key,ip,500)
 		gen_block.add_transaction(gen_trans)
+		#add block to blockchain
+		print("YOLO")
+	
 		print(new_node.validate_transaction(gen_trans))
 
 		print("finished gen block")

@@ -1,5 +1,6 @@
 import block
 import wallet
+import blockchain
 
 import Crypto
 import Crypto.Random
@@ -50,8 +51,6 @@ class node:
 		return 1
 
 
-
-
 	def validate_transaction(self,transaction):
 		#use of signature and NBCs balance
 		sender_adress=transaction.sender_address
@@ -64,9 +63,14 @@ class node:
 		except(ValueError,TypeError):
 			return False
 
-	def add_transaction_to_block():
+	def add_transaction_to_block(transaction,block,capacity):
 		#if enough transactions  mine
-		return 1
+		block.add_transaction(transaction)
+		if(len(block.listOfTransactions)==capacity):
+			####thread#####
+			#thread########
+			########thread#
+			mine_block()
 
 
 	def mine_block():
@@ -81,12 +85,24 @@ class node:
 ##	def valid_proof(.., difficulty=MINING_DIFFICULTY):
 ##		return 1
 
-
+	def validate_block(block,blockchain,difficulty):
+		prvHash=block.previousHash
+		myHash=block.hash
+		temp_bits= str(bin(int(block.hash.hexdigest()[0], base=16)))
+		first_dif_bits = int(temp_bits[2:difficulty+2])
+		prvhash2=blockchain.block_chain[-1].hash
+		if((prvHash!=prvhash2) or (first_dif_bits != 0)):
+			return False #invalid block
+		else:
+			return True #valid block
 	#concencus functions
 
-	def valid_chain(self, chain):
-		#check for the longer chain accroose all nodes
-		return 1
+	def valid_chain(self, chain,difficulty):
+		myc=chain.block_chain
+		for i in range(1,len(myc)):
+			if(not(validate_block(myc[i],[myc[i-1]],difficulty))):
+				return False
+		return True
 
 	def resolve_conflicts(self):
 		#resolve correct chain
