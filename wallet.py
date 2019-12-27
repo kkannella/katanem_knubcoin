@@ -37,8 +37,10 @@ class wallet:
 		print(ciphertext)
 		cipher = PKCS1_OAEP.new(key)
 		message = cipher.decrypt(ciphertext)
-		print(message.decode())		
+		print(message.decode())
+				
 	def get_public_key(self):
 		return self.public_key
+		
 	def get_address(self):
 		return self.address

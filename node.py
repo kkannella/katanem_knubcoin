@@ -35,18 +35,19 @@ class node:
 		self.ring_ip.append(ip)
 		self.ring_port.append(port)
 		self.ring_public_key.append(pubk)
-
+		
 	def create_transaction(sender, receiver, signature):
 		#remember to broadcast it
 		return 1
 
 	def broadcast_transaction():
+		
 		return 1
 
 
 
 
-	def validdate_transaction():
+	def validate_transaction():
 		#use of signature and NBCs balance
 
 		return 1
@@ -66,9 +67,9 @@ class node:
 
 ##	def valid_proof(.., difficulty=MINING_DIFFICULTY):
 ##		return 1
-
-
-
+	
+	
+	
 	#concencus functions
 
 	def valid_chain(self, chain):
