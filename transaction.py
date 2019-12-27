@@ -13,9 +13,9 @@ from flask import Flask, jsonify, request, render_template
 
 
 class Transaction:
-
+	
     def __init__(self, sender_address, sender_private_key, recipient_address, value):
-
+	
 	return 1
         ##set
 	

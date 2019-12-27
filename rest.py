@@ -35,7 +35,7 @@ CORS(app)
 ##-----thread functions 
 def b_cast(ip_list,port_list):
 	##Add loop checking or status 200
-
+	
 	for i in range (len(ip_list)):
 		temp_r= requests.get(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/check_live")
 		print(temp_r.status_code)
@@ -43,7 +43,6 @@ def b_cast(ip_list,port_list):
 			time.sleep(0.5)
 			temp_r= requests.get(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/check_live")
 	##Send post requests to all nodes
-	print("ALL APIES READY TO GO")
 
 	parameters={'ring_id':new_node.ring_id, 'ring_ip':new_node.ring_ip,'ring_port':new_node.ring_port,'ring_pubk':new_node.ring_public_key }
 	
@@ -51,7 +50,13 @@ def b_cast(ip_list,port_list):
 		r_b_cast= requests.post(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/apply_lists",json=parameters)
 		result=r_b_cast.json()
 		print(result['id_count'])	
-	##kill thread
+	##Create genesis block
+	print("Starting gen block")
+	
+	gen_block=new_node.create_new_block(0,1)
+	
+	print(gen_block.index)
+	
 	print("Finished thread")
 #.......................................................................................
 
@@ -64,34 +69,22 @@ def apply_list():
 	ip_list=input_json['ring_ip']
 	pubk_list=input_json['ring_pubk']
 	port_list=input_json['ring_port']
-	print("APLYING LISTS")
+	
 	#original_key=RSA.importKey(pubk.encode('ascii'))
 	##add check function for params
-	print(id_list)
-	print(ip_list)
-	print(pubk_list)
-	print(port_list)
+	
 	##add node to ring with idc
 	new_node.ring_id=id_list
 	new_node.ring_ip=ip_list
 	new_node.ring_port=pubk_list
 	new_node.ring_public_key=port_list
 	
-	print(new_node.ring_id[1])
-	print(new_node.ring_ip[1])
-	print(new_node.ring_port[1])
-	print(new_node.ring_public_key[1])
 	response={'id_count':99}
+	
 	return jsonify(response), 200
-
-
-
-
+	
+		
 # get all transactions in the blockchain
-
-
-
-
 
 @app.route('/check_live', methods=['GET'])
 def check_life():
@@ -105,7 +98,6 @@ def get_transactions():
 	response = {'transactions': transactions}
 	return jsonify(response), 200
 	
-
 @app.route('/id_count/get', methods=['GET'])
 def get_id_counts():
 	temp = new_node.get_id_count()
@@ -119,7 +111,6 @@ def get_id_counts():
 def register_node():
 	input_json = request.get_json(force=True)
 	
-
 	addr=input_json['address']
 	pubk=input_json['public_key']
 	port=input_json['port']
@@ -134,10 +125,8 @@ def register_node():
 	new_node.register_node_to_ring(idc,addr,port,pubk)
 	response={'id_count':idc}
 	if idc==4:
-		##broadcast ring list
-		print("strting thread")
+		##broadcast ring list with thread function
 		start_new_thread(b_cast,(new_node.ring_ip,new_node.ring_port))
-		print("thread started?")
 
 	return jsonify(response), 200
 
@@ -168,13 +157,11 @@ if __name__ == '__main__':
 		new_node.ring_port.append(port)
 		public_key_string=new_wallet.get_public_key().exportKey("PEM").decode('ascii')
 		new_node.ring_public_key.append(public_key_string)
-	#new_node.create_wallet()
 	else:
 		new_node=node.node()
 		#pass ip as param
 		new_wallet=wallet.wallet(ip)
 		#print(new_wallet.get_public_key())
-		
 		public_key_string=new_wallet.get_public_key().exportKey("PEM")
 		#print(public_key_string)
 		#original_key=RSA.importKey(public_key_string)
@@ -184,7 +171,7 @@ if __name__ == '__main__':
 		##Pass bublic key address and port
 		parameters={'public_key':public_key_string.decode('ascii'), 'address':new_wallet.get_address(),'port':port }
 		
-		r= requests.post(url='http://127.0.0.1:5000/register_new_node',json=parameters)
+		r = requests.post(url='http://127.0.0.1:5000/register_new_node',json=parameters)
 		result=r.json()
 		new_node.current_id_count=result['id_count']
 		print(result['id_count'])

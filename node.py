@@ -3,7 +3,6 @@ import wallet
 
 class node:
 	
-	
 	def __init__(self):
 		#self.NBC=100?
 		##set
@@ -18,11 +17,8 @@ class node:
 		self.ring_balance=[]
 		#slef.ring[]   #here we store information for every node, as its id, its address (ip:port) its public key and its balance 
 		
-
-
-
-	def create_new_block():
-		return 1
+	def create_new_block(self,index,prvHash):
+		return block.Block(index,prvHash)
 
 	def create_wallet(self):
 		self.wallet=wallet.wallet()
@@ -67,7 +63,6 @@ class node:
 
 ##	def valid_proof(.., difficulty=MINING_DIFFICULTY):
 ##		return 1
-	
 	
 	
 	#concencus functions
