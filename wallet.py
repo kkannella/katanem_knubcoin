@@ -16,13 +16,13 @@ from uuid import uuid4
 
 class wallet:
 
-	def __init__(self):
+	def __init__(self,addr):
 		##set
 		self.private_key=RSA.generate(1024)
 		#self.public_key
 		#self.private_key
 		self.public_key=self.private_key.publickey()
-		#self_address
+		self.address=addr
 		#self.transactions
 
 	def balance(self):
@@ -37,8 +37,8 @@ class wallet:
 		print(ciphertext)
 		cipher = PKCS1_OAEP.new(key)
 		message = cipher.decrypt(ciphertext)
-		print(message.decode())
-			
-	def get_return(self):
+		print(message.decode())		
+	def get_public_key(self):
 		return self.public_key
-
+	def get_address(self):
+		return self.address
