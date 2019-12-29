@@ -1,20 +1,41 @@
 import block
 import wallet
 import blockchain
-
+import transaction
 import Crypto
 import Crypto.Random
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Cipher import PKCS1_OAEP
+
+import jsonpickle
+
+import requests
+from flask import Flask, jsonify, request, render_template
+from flask_cors import CORS
+
+from _thread import *
+import threading
+
+
+
+##-----thread functions
+def b_cast_t(ip_list,port_list,transa):
+	temp_obj = jsonpickle.encode(transa)
+	parameters={'transaction':temp_obj}
+	for i in range (len(ip_list)):
+		b_cast_transa= requests.post(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/add_transaction",json=parameters)
+		result=b_cast_transa.json()
+
+
 class node:
 
 	def __init__(self):
 		#self.NBC=100?
 		##set
 		self.wallet=None
-		#self.chain
+		self.chain=None
 		#self.NBCs
 		self.UTXOs = []
 		self.current_id_count=0
@@ -24,7 +45,7 @@ class node:
 		self.ring_public_key=[]
 		self.ring_balance=[]
 		#slef.ring[]   #here we store information for every node, as its id, its address (ip:port) its public key and its balance
-
+	
 	def create_new_block(self,index,prvHash):
 		return block.Block(index,prvHash)
 
@@ -41,14 +62,19 @@ class node:
 		self.ring_public_key.append(pubk)
 		self.UTXOs.append([])
 
-	def create_transaction(sender, receiver,signature):
+	def create_transaction(self, sender_address, sender_private_key, recipient_address, value):
+		new_trans=transaction.Transaction(sender_address,sender_private_key,recipient_address,value)
 		#remember to broadcast it
+		self.broadcast_transaction(new_trans)
 
-		return 1
-
-	def broadcast_transaction():
-
-		return 1
+	def broadcast_transaction(self,transaction):
+		print("Broadcasting Transaction")
+		##Send post requests to all nodes
+		##broadcast ring list with thread function
+		start_new_thread(b_cast_t,(self.ring_ip,self.ring_port,transaction))
+		
+		
+	
 
 
 	def validate_transaction(self,transaction):
@@ -59,9 +85,11 @@ class node:
 		pubkey=RSA.importKey(self.ring_public_key[self.ring_ip.index(sender_adress)].encode('ascii'))
 		try:
 			PKCS1_v1_5.new(pubkey).verify(h, signature)
-			return True
-		except(ValueError,TypeError):
-			return False
+     			print "The signature is valid."
+ 		except (ValueError, TypeError):
+    			print "The signature is not valid."
+		
+		return True
 
 	def add_transaction_to_block(transaction,block,capacity):
 		#if enough transactions  mine

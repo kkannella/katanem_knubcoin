@@ -20,58 +20,77 @@ import node
 import blockchain
 import wallet
 import transaction
-
+import jsonpickle
 ### JUST A BASIC EXAMPLE OF A REST API WITH FLASK
 
-ultra_lock = threading.Lock()
-
+apply_lock = threading.Lock()
+sync_lock = threading.Lock()
 
 app = Flask(__name__)
 CORS(app)
-blockchain = blockchain.blockchain()
+
 
 ##-----thread functions
-def b_cast(ip_list,port_list):
-	##Add loop checking or status 200
-
+def b_cast(ip_list,port_list,addr):
+	##Add loop checking for status 200
+	time.sleep(2)
 	for i in range (len(ip_list)):
 		temp_r= requests.get(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/check_live")
-		print(temp_r.status_code)
 		while	(temp_r.status_code != 200):
 			time.sleep(0.5)
 			temp_r= requests.get(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/check_live")
 	##Send post requests to all nodes
+	temp_obj=new_node.chain
+	temp_chain = jsonpickle.encode(temp_obj)
 
-	parameters={'ring_id':new_node.ring_id, 'ring_ip':new_node.ring_ip,'ring_port':new_node.ring_port,'ring_pubk':new_node.ring_public_key }
+	parameters={'ring_id':new_node.ring_id, 'ring_ip':new_node.ring_ip,'ring_port':new_node.ring_port,'ring_pubk':new_node.ring_public_key,'block_chain':temp_chain }
 
 	for i in range (len(ip_list)):
 		r_b_cast= requests.post(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/apply_lists",json=parameters)
 		result=r_b_cast.json()
-		print(result['id_count'])
-
-
+	
+	##sent to new node coins
+	time.sleep(2)
+	new_node.create_transaction(ip,new_wallet.private_key,addr,100)
 	print("Finished thread")
 #.......................................................................................
 
+@app.route('/add_transaction',methods=['POST'])
+def add_transactions():
+	input_json = request.get_json(force=True)
+	temp_trans=input_json['transaction']
+	transactionb= jsonpickle.decode(temp_trans)
+	##call verify
+	if(new_node.validate_transaction(transactionb)):
+		print("VALID")
+	##add to block if verified
+	print(transactionb.sender_address)
+	response={'comp':1}
+	return jsonify(response), 200
+	
+@app.route('/get_transactions',methods=['GET'])
+def get_transactions():
+	temp=new_node.ring_ip
+	response={'test_list':temp}
+	return jsonify(response), 200
 
 @app.route('/apply_lists',methods=['POST'])
 def apply_list():
 	input_json = request.get_json(force=True)
-
+	
+	#apply_lock.acquire()
 	id_list=input_json['ring_id']
 	ip_list=input_json['ring_ip']
 	pubk_list=input_json['ring_pubk']
 	port_list=input_json['ring_port']
-
-	#original_key=RSA.importKey(pubk.encode('ascii'))
-	##add check function for params
-
-	##add node to ring with idc
+	b_chain=input_json['block_chain']
+	
 	new_node.ring_id=id_list
 	new_node.ring_ip=ip_list
 	new_node.ring_port=pubk_list
 	new_node.ring_public_key=port_list
-
+	new_node.chain=jsonpickle.decode(b_chain)
+	#apply_lock.release()
 	response={'id_count':99}
 
 	return jsonify(response), 200
@@ -84,21 +103,8 @@ def check_life():
 	response={'live':1}
 	return jsonify(response), 200
 
-@app.route('/transactions/get', methods=['GET'])
-def get_transactions():
-	transactions = blockchain.transactions
 
-	response = {'transactions': transactions}
-	return jsonify(response), 200
 
-@app.route('/id_count/get', methods=['GET'])
-def get_id_counts():
-	temp = new_node.get_id_count()
-	print(temp)
-	#a_wallet.balance()
-	#response = dict(m =  temp)
-	response=[{'id_count': temp}]
-	return jsonify(response), 200
 
 @app.route('/register_new_node',methods=['POST'])
 def register_node():
@@ -109,6 +115,7 @@ def register_node():
 	port=input_json['port']
 
 	#original_key=RSA.importKey(pubk.encode('ascii'))
+	
 	##add check function for params
 
 	new_node.current_id_count=new_node.get_id_count()+1
@@ -117,13 +124,14 @@ def register_node():
 	idc=new_node.get_id_count()
 	new_node.register_node_to_ring(idc,addr,port,pubk)
 	response={'id_count':idc}
-	##if all nodes have been added broadcast them
-	if idc==4:
-		##broadcast ring list with thread function
-		start_new_thread(b_cast,(new_node.ring_ip,new_node.ring_port))
-	##sent to new node coins
-
-
+	
+	##broadcast ring list with thread function
+	start_new_thread(b_cast,(new_node.ring_ip,new_node.ring_port,addr))
+	
+	
+	
+	#welcome_trans=transaction.Transaction(ip,new_wallet.private_key,addr,100)
+	
 	return jsonify(response), 200
 
 
@@ -141,8 +149,7 @@ if __name__ == '__main__':
 	port = args.port
 	ip=args.ip
 
-	#a_wallet=wallet.wallet()
-	#a_wallet.balance()
+	
 	if(ip=='127.0.0.1'):
 		new_node=node.node()
 		new_wallet=wallet.wallet(ip)
@@ -151,6 +158,7 @@ if __name__ == '__main__':
 		new_node.ring_id.append(0)
 		new_node.ring_ip.append(ip)
 		new_node.ring_port.append(port)
+		new_node.chain=blockchain.blockchain()
 		public_key_string=new_wallet.get_public_key().exportKey("PEM").decode('ascii')
 		new_node.ring_public_key.append(public_key_string)
 
@@ -161,16 +169,11 @@ if __name__ == '__main__':
 		#gen_trans=new_node.create_transaction()
 		gen_trans=transaction.Transaction(ip,new_wallet.private_key,ip,500)
 		gen_block.add_transaction(gen_trans)
-		#add block to blockchain
-		print("YOLO")
-	
-		print(new_node.validate_transaction(gen_trans))
-
+		#add block to blockchain as its finished
+		print("Adding first block to bchain")
+		new_node.chain.add_block_to_chain(gen_block)
 		print("finished gen block")
 		##add gen block to blockchain
-
-
-
 
 	else:
 		new_node=node.node()

@@ -31,8 +31,9 @@ class Transaction:
         myid=(str(sender_address)+str(recipient_address)+str(value)+str(random.random())).encode('ASCII')
         self.transaction_id=SHA256.new(data=myid)
         #self.transaction_inputs: λίστα από Transaction Input
-        #self.transaction_inputs=
+        self.transaction_inputs=[]
         #self.transaction_outputs: λίστα από Transaction Output
+        self.transaction_outputs=[]
         #selfSignature
         self.signature=PKCS1_v1_5.new(sender_private_key).sign(self.transaction_id)
 
