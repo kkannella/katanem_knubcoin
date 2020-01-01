@@ -32,7 +32,7 @@ def b_cast_t(ip_list,port_list,transa):
 class node:
 
 	def __init__(self):
-		#self.NBC=100?
+		self.NBC=0 ##test
 		##set
 		self.wallet=None
 		self.chain=None
@@ -80,25 +80,28 @@ class node:
 	def validate_transaction(self,transaction):
 		#use of signature and NBCs balance
 		sender_adress=transaction.sender_address
-		h=transaction.transaction_id
+		##use temp until h is passed humanly
+		h= SHA.new(transaction.transaction_temp)
 		signature=transaction.signature
-		pubkey=RSA.importKey(self.ring_public_key[self.ring_ip.index(sender_adress)].encode('ascii'))
-		try:
-			PKCS1_v1_5.new(pubkey).verify(h, signature)
-     			print "The signature is valid."
- 		except (ValueError, TypeError):
-    			print "The signature is not valid."
 		
-		return True
+		pubkey=RSA.importKey(self.ring_public_key[self.ring_ip.index(sender_adress)].encode('ascii'))
+		
+		####error with h, sig 
+		##dev note ti skata pezi me to h kai to jsonpickle , neo tropo to pass obj mallon
+		verified= PKCS1_v1_5.new(pubkey).verify(h, signature)
+		
+		return verified
 
-	def add_transaction_to_block(transaction,block,capacity):
+	def add_transaction_to_block(self,transaction,block,capacity):
 		#if enough transactions  mine
 		block.add_transaction(transaction)
 		if(len(block.listOfTransactions)==capacity):
+			print("error")
+			
 			####thread#####
 			#thread########
 			########thread#
-			mine_block()
+			#mine_block()
 
 
 	def mine_block():

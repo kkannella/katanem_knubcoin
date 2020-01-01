@@ -55,6 +55,12 @@ def b_cast(ip_list,port_list,addr):
 	print("Finished thread")
 #.......................................................................................
 
+@app.route('/get_block',methods=['GET'])
+def get_block():
+	tempb= jsonpickle.encode(new_block)
+	response={'block':tempb}
+	return jsonify(response), 200
+	
 @app.route('/add_transaction',methods=['POST'])
 def add_transactions():
 	input_json = request.get_json(force=True)
@@ -62,9 +68,9 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
+		new_node.add_transaction_to_block(transactionb,new_block,100)
 		print("VALID")
 	##add to block if verified
-	print(transactionb.sender_address)
 	response={'comp':1}
 	return jsonify(response), 200
 	
@@ -168,11 +174,13 @@ if __name__ == '__main__':
 		gen_block=new_node.create_new_block(0,1)
 		#gen_trans=new_node.create_transaction()
 		gen_trans=transaction.Transaction(ip,new_wallet.private_key,ip,500)
-		gen_block.add_transaction(gen_trans)
+		##100 capacity temp
+		new_node.add_transaction_to_block(gen_trans,gen_block,100)
 		#add block to blockchain as its finished
 		print("Adding first block to bchain")
 		new_node.chain.add_block_to_chain(gen_block)
 		print("finished gen block")
+		new_block=new_node.create_new_block(0,1)
 		##add gen block to blockchain
 
 	else:
@@ -185,7 +193,7 @@ if __name__ == '__main__':
 		#original_key=RSA.importKey(public_key_string)
 		#print(original_key)
 		#temp = public_key_string.decode('ascii')
-
+		new_block=new_node.create_new_block(0,1)
 		##Pass bublic key address and port
 		parameters={'public_key':public_key_string.decode('ascii'), 'address':new_wallet.get_address(),'port':port }
 

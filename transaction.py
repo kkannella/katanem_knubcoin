@@ -5,7 +5,7 @@ import binascii
 import Crypto
 import Crypto.Random
 
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 
@@ -28,8 +28,9 @@ class Transaction:
         #self.amount: το ποσό που θα μεταφερθεί
         self.amount=value
         #self.transaction_id: το hash του transaction
-        myid=(str(sender_address)+str(recipient_address)+str(value)+str(random.random())).encode('ASCII')
-        self.transaction_id=SHA256.new(data=myid)
+        myid=(str(sender_address)+str(recipient_address)+str(value)+str(random.random())).encode()
+        self.transaction_id=SHA.new(myid)
+        self.transaction_temp=myid
         #self.transaction_inputs: λίστα από Transaction Input
         self.transaction_inputs=[]
         #self.transaction_outputs: λίστα από Transaction Output
