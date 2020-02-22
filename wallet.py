@@ -26,6 +26,7 @@ class wallet:
 		#self.transactions
 
 	def balance(self):
+		###to be fixed
 		print(self.private_key)
 		print(self.public_key)
 		key=self.private_key

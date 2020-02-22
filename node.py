@@ -88,11 +88,12 @@ class node:
 		
 		####error with h, sig 
 		##dev note ti skata pezi me to h kai to jsonpickle , neo tropo to pass obj mallon
-		verified= PKCS1_v1_5.new(pubkey).verify(h, signature)
+		verified = PKCS1_v1_5.new(pubkey).verify(h, signature)
 		
 		return verified
 
 	def add_transaction_to_block(self,transaction,block,capacity):
+		
 		#if enough transactions  mine
 		block.add_transaction(transaction)
 		if(len(block.listOfTransactions)==capacity):
@@ -104,11 +105,19 @@ class node:
 			#mine_block()
 
 
-	def mine_block():
+	def mine_block(self , block,difficulty):
+		trynonce = 0
+		print("Mining Block")
+		while (not(tryhash=block.myHash(trynonce).hexdigest().startswith('0'* difficulty)) ):
+			trynonce = trynonce +1
+		print("Block mined")
+		##add broadcast block
+		
 		return 1
 
 
-	def broadcast_block():
+	def broadcast_block(self , block):
+		
 		return 1
 
 
@@ -116,22 +125,23 @@ class node:
 ##	def valid_proof(.., difficulty=MINING_DIFFICULTY):
 ##		return 1
 
-	def validate_block(block,blockchain,difficulty):
+	def validate_block(self, block,blockchain,difficulty):
 		prvHash=block.previousHash
-		myHash=block.hash
-		temp_bits= str(bin(int(block.hash.hexdigest()[0], base=16)))
-		first_dif_bits = int(temp_bits[2:difficulty+2])
+		myHashStr=block.hash.hexdigest()
+		##
+		##temp_bits= str(bin(int(block.hash.hexdigest()[0], base=16)))
+		##first_dif_bits = int(temp_bits[2:difficulty+2])
 		prvhash2=blockchain.block_chain[-1].hash
-		if((prvHash!=prvhash2) or (first_dif_bits != 0)):
+		if((prvHash!=prvhash2) or (not(myHashStr.startswith('0' * difficulty)))):
 			return False #invalid block
 		else:
 			return True #valid block
 	#concencus functions
 
 	def valid_chain(self, chain,difficulty):
-		myc=chain.block_chain
-		for i in range(1,len(myc)):
-			if(not(validate_block(myc[i],[myc[i-1]],difficulty))):
+		mychain=chain
+		for i in range(2,len(mychain)+1): ##starts from 2 coz 1 is gen block
+			if(not(validate_block(mychain[i],mychain,difficulty))):
 				return False
 		return True
 

@@ -93,9 +93,13 @@ def apply_list():
 	
 	new_node.ring_id=id_list
 	new_node.ring_ip=ip_list
-	new_node.ring_port=pubk_list
-	new_node.ring_public_key=port_list
+	
+	new_node.ring_port=port_list
+	
+	new_node.ring_public_key=pubk_list
+	
 	new_node.chain=jsonpickle.decode(b_chain)
+	
 	#apply_lock.release()
 	response={'id_count':99}
 
@@ -164,10 +168,13 @@ if __name__ == '__main__':
 		new_node.ring_id.append(0)
 		new_node.ring_ip.append(ip)
 		new_node.ring_port.append(port)
+		##Create blockchain
 		new_node.chain=blockchain.blockchain()
+		
 		public_key_string=new_wallet.get_public_key().exportKey("PEM").decode('ascii')
 		new_node.ring_public_key.append(public_key_string)
-
+		
+		
 		##Create genesis block
 		print("Starting gen block")
 
@@ -180,8 +187,9 @@ if __name__ == '__main__':
 		print("Adding first block to bchain")
 		new_node.chain.add_block_to_chain(gen_block)
 		print("finished gen block")
-		new_block=new_node.create_new_block(0,1)
-		##add gen block to blockchain
+		##make second block
+		new_block=new_node.create_new_block(gen_block.hash,2)
+		
 
 	else:
 		new_node=node.node()
@@ -193,10 +201,11 @@ if __name__ == '__main__':
 		#original_key=RSA.importKey(public_key_string)
 		#print(original_key)
 		#temp = public_key_string.decode('ascii')
-		new_block=new_node.create_new_block(0,1)
+		#new_block=new_node.create_new_block(0,1)
 		##Pass bublic key address and port
+		
 		parameters={'public_key':public_key_string.decode('ascii'), 'address':new_wallet.get_address(),'port':port }
-
+		##r = requests.post(url='http://192.168.0.3:5000/register_new_node',json=parameters)
 		r = requests.post(url='http://127.0.0.1:5000/register_new_node',json=parameters)
 		result=r.json()
 		new_node.current_id_count=result['id_count']
