@@ -7,13 +7,9 @@ import Crypto.Random
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-		
-if __name__ == '__main__':
-	ra = requests.get(url='http://127.0.0.5:5000/get_block')
-	result=ra.json()
-	block=result['block']
-	tempa= jsonpickle.decode(block)
-	blockaki=tempa[-1]
-	for i in range (len(blockaki.listOfTransactions)):
-		print(blockaki.listOfTransactions[i].recipient_address)
 
+if __name__ == '__main__':
+	parameters={'recipient_node':1,'amount':10}
+	ra = requests.post(url='http://127.0.0.1:5000/create_transactiona',json=parameters)
+	result=ra.json()
+	print(result['comp'])

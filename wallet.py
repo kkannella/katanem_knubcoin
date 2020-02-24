@@ -19,27 +19,23 @@ class wallet:
 	def __init__(self,addr):
 		##set
 		self.private_key=RSA.generate(1024)
-		#self.public_key
-		#self.private_key
 		self.public_key=self.private_key.publickey()
 		self.address=addr
 		#self.transactions
 
-	def balance(self):
-		###to be fixed
-		print(self.private_key)
-		print(self.public_key)
-		key=self.private_key
-		p_key=key.publickey()
-		message='hello world'
-		message=str.encode(message)
-		cipher = PKCS1_OAEP.new(p_key)
-		ciphertext = cipher.encrypt(message)
-		print(ciphertext)
-		cipher = PKCS1_OAEP.new(key)
-		message = cipher.decrypt(ciphertext)
-		print(message.decode())
-				
+	def balance(self,UTXOs):
+		balance=0
+		#public_key_string=self.get_public_key().exportKey("PEM")
+		for itera in UTXOs:
+			print(str(itera[2]))
+			print(str(self.address))
+			#print(public_key_string)
+			#print("PRoblem :",itera[2])
+			if (str(itera[2])==str(self.address)):
+				balance= balance + itera[3]
+				print("FOUND ONE")
+		return balance
+			
 	def get_public_key(self):
 		return self.public_key
 	

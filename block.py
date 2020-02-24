@@ -24,8 +24,8 @@ class Block:
 
 		
 	def myHash(self,noncea):
-		self.nonce=nocnea
-			self.hash=SHA.new((str(self.index)+str(self.previousHash)+str(self.timestamp)+str(self.nonce)).encode())
+		self.nonce=noncea
+		self.hash=SHA.new((str(self.index)+str(self.previousHash)+str(self.timestamp)+str(self.nonce)).encode())
 		##self.hash=SHA.new((str(self.index)+str(self.previousHash)+str(self.timestamp)+str(self.nonce)+str(self.listOfTransactions)).encode())
 		#calculate self.hash this one must match difficulty params
 		return self.hash

@@ -25,7 +25,7 @@ import jsonpickle
 
 apply_lock = threading.Lock()
 sync_lock = threading.Lock()
-
+#validate_lock = threading.Lock()
 app = Flask(__name__)
 CORS(app)
 
@@ -42,8 +42,10 @@ def b_cast(ip_list,port_list,addr):
 	##Send post requests to all nodes
 	temp_obj=new_node.chain
 	temp_chain = jsonpickle.encode(temp_obj)
-
-	parameters={'ring_id':new_node.ring_id, 'ring_ip':new_node.ring_ip,'ring_port':new_node.ring_port,'ring_pubk':new_node.ring_public_key,'block_chain':temp_chain }
+	
+	temp_obj2 = new_node.UTXO
+	temp_utxo = jsonpickle.encode(temp_obj2)
+	parameters={'ring_id':new_node.ring_id, 'ring_ip':new_node.ring_ip,'ring_port':new_node.ring_port,'ring_pubk':new_node.ring_public_key,'block_chain':temp_chain ,'UTXO':temp_utxo }
 
 	for i in range (len(ip_list)):
 		r_b_cast= requests.post(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/apply_lists",json=parameters)
@@ -57,10 +59,46 @@ def b_cast(ip_list,port_list,addr):
 
 @app.route('/get_block',methods=['GET'])
 def get_block():
-	tempb= jsonpickle.encode(new_block)
+	test_r=new_node.chain.block_chain
+	tempb= jsonpickle.encode(test_r)
 	response={'block':tempb}
 	return jsonify(response), 200
-	
+
+@app.route('/get_node',methods=['GET'])
+def get_node():
+	test_r=new_node
+	tempb= jsonpickle.encode(test_r)
+	response={'block':tempb}
+	return jsonify(response), 200
+
+@app.route('/get_balance',methods=['GET'])
+def get_balance():
+	test_r=new_wallet.balance(new_node.UTXO)
+	#tempb= jsonpickle.encode(test_r)
+	response={'balance':test_r}
+	return jsonify(response), 200
+
+@app.route('/add_block',methods=['POST'])
+def add_block():
+	input_json = request.get_json(force=True)
+	temp_obj=input_json['block']
+	block_to_add= jsonpickle.decode(temp_obj)
+	new_node.chain.add_block_to_chain(block_to_add)
+	response={'comp':1}
+	return jsonify(response), 200
+
+
+@app.route('/create_transactiona',methods=['POST'])
+def create_transactiona():
+	input_json = request.get_json(force=True)
+	recipient=input_json['recipient_node']
+	amount=input_json['amount']
+	addra=new_node.ring_ip[recipient]
+	new_node.create_transaction(ip,new_wallet.private_key,addra,amount)
+	response={'comp':1}
+	return jsonify(response), 200
+
+
 @app.route('/add_transaction',methods=['POST'])
 def add_transactions():
 	input_json = request.get_json(force=True)
@@ -68,9 +106,8 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
-		new_node.add_transaction_to_block(transactionb,new_block,100)
-		print("VALID")
-	##add to block if verified
+		new_node.add_transaction_to_block(transactionb,new_node.chain.block_chain[-1],4)
+		print("VALID")	
 	response={'comp':1}
 	return jsonify(response), 200
 	
@@ -90,7 +127,7 @@ def apply_list():
 	pubk_list=input_json['ring_pubk']
 	port_list=input_json['ring_port']
 	b_chain=input_json['block_chain']
-	
+	b_utxo = input_json['UTXO']
 	new_node.ring_id=id_list
 	new_node.ring_ip=ip_list
 	
@@ -99,7 +136,7 @@ def apply_list():
 	new_node.ring_public_key=pubk_list
 	
 	new_node.chain=jsonpickle.decode(b_chain)
-	
+	new_node.UTXO =jsonpickle.decode(b_utxo)
 	#apply_lock.release()
 	response={'id_count':99}
 
@@ -123,13 +160,14 @@ def register_node():
 	addr=input_json['address']
 	pubk=input_json['public_key']
 	port=input_json['port']
-
+	
+	
 	#original_key=RSA.importKey(pubk.encode('ascii'))
 	
 	##add check function for params
 
 	new_node.current_id_count=new_node.get_id_count()+1
-
+	chain=new_node.chain
 	##add node to ring with idc
 	idc=new_node.get_id_count()
 	new_node.register_node_to_ring(idc,addr,port,pubk)
@@ -163,6 +201,7 @@ if __name__ == '__main__':
 	if(ip=='127.0.0.1'):
 		new_node=node.node()
 		new_wallet=wallet.wallet(ip)
+		new_node.wallet=new_wallet
 		new_node.current_id_count=0
 		##set node params
 		new_node.ring_id.append(0)
@@ -181,21 +220,22 @@ if __name__ == '__main__':
 		gen_block=new_node.create_new_block(0,1)
 		#gen_trans=new_node.create_transaction()
 		gen_trans=transaction.Transaction(ip,new_wallet.private_key,ip,500)
+		new_node.UTXO.append((new_node.unique_id , gen_trans.transaction_id_digest , gen_trans.recipient_address , gen_trans.amount ))
 		##100 capacity temp
-		new_node.add_transaction_to_block(gen_trans,gen_block,100)
-		#add block to blockchain as its finished
+		new_node.add_transaction_to_block(gen_trans,gen_block,4)
+		#add block to blockchain as its finished , 100 is block capacity
 		print("Adding first block to bchain")
 		new_node.chain.add_block_to_chain(gen_block)
 		print("finished gen block")
 		##make second block
 		new_block=new_node.create_new_block(gen_block.hash,2)
-		
+		new_node.chain.add_block_to_chain(new_block)
 
 	else:
 		new_node=node.node()
 		#pass ip as param
 		new_wallet=wallet.wallet(ip)
-		#print(new_wallet.get_public_key())
+		new_node.wallet=new_wallet
 		public_key_string=new_wallet.get_public_key().exportKey("PEM")
 		#print(public_key_string)
 		#original_key=RSA.importKey(public_key_string)
@@ -203,9 +243,7 @@ if __name__ == '__main__':
 		#temp = public_key_string.decode('ascii')
 		#new_block=new_node.create_new_block(0,1)
 		##Pass bublic key address and port
-		
 		parameters={'public_key':public_key_string.decode('ascii'), 'address':new_wallet.get_address(),'port':port }
-		##r = requests.post(url='http://192.168.0.3:5000/register_new_node',json=parameters)
 		r = requests.post(url='http://127.0.0.1:5000/register_new_node',json=parameters)
 		result=r.json()
 		new_node.current_id_count=result['id_count']
