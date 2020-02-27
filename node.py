@@ -17,7 +17,7 @@ from flask_cors import CORS
 from _thread import *
 import threading
 validate_lock = threading.Lock()
-
+#chain_lock = threading.Lock()
 
 ##-----thread functions
 def b_cast_t(ip_list,port_list,transa):
@@ -77,10 +77,6 @@ class node:
 		##broadcast ring list with thread function
 		start_new_thread(b_cast_t,(self.ring_ip,self.ring_port,transaction))
 		
-		
-	
-
-
 	def validate_transaction(self,transaction):
 		validate_lock.acquire()
 		#use of signature and NBCs balance
@@ -124,14 +120,15 @@ class node:
 		return False
 
 	def add_transaction_to_block(self,transaction,block,capacity):
-		
+		new_new_block = None
 		#if enough transactions mine
 		block.add_transaction(transaction)
 		if(len(block.listOfTransactions)==capacity):
 			#spawn thread to mine block
 			#start_new_thread(miner_job,(block)) 
 			#ama den gini me thread isos kalitera?
-			self.mine_block(block,1)	
+			self.mine_block(block,1)
+			new_new_block = new_node.create_new_block(block.index+1,block.hash)	
 		##validate_lock.release() ##lock to serialize transactions
 		return 1
 
@@ -146,7 +143,7 @@ class node:
 		start_new_thread(self.broadcast_block,(block,))
 		print("Broadcasted")
 		##create new block to chain
-		self.chain.block_chain.append(self.create_new_block(block.index+1,block.hash))
+		##self.chain.block_chain.append(self.create_new_block(block.index+1,block.hash))
 		return 1
 
 
@@ -159,17 +156,18 @@ class node:
 		return 1
 
 
-	def validate_block(self, block,blockchain,difficulty):
+	def validate_block(self, block,blockchainlist,difficulty):
 		prvHash=block.previousHash
-		myHashStr=block.hash.hexdigest()
-		##
-		##temp_bits= str(bin(int(block.hash.hexdigest()[0], base=16)))
-		##first_dif_bits = int(temp_bits[2:difficulty+2])
-		prvhash2=blockchain.block_chain[-1].hash
-		if((prvHash!=prvhash2) or (not(myHashStr.startswith('0' * difficulty)))):
-			return False #invalid block
+		myHashStr=block.hash_digest
+		print("Printg prevhash :",prvHash)
+		prvhash2=blockchainlist[-1].hash
+		print("Printg prevhash2 :",prvhash2)
+		if((prvHash==prvhash2) and (myHashStr.startswith('0' * difficulty))):
+			return 1 #valid block
+		elif ((prvHash!=prvhash2)):
+			return 2 #invalid block due to change in chain
 		else:
-			return True #valid block
+			return 3 #invalid due to errors
 	#concencus functions
 
 	def valid_chain(self, chain,difficulty):
@@ -181,7 +179,21 @@ class node:
 
 	def resolve_conflicts(self):
 		#resolve correct chain
-		return 1
-
+		#request chain length from everyone
+		for i in range (len(self.ring_ip)):
+			req_chain= requests.get(url="http://"+ str(self.ring_ip[i]) + ":"+ str(self.ring_port[i]) +"/get_chain")
+			result=req_chain.json()
+			temp_chain=result['chain']
+			new_chain = jsonpickle.decode(temp_chain)
+		if(len(new_chain.block_chain)==len(self.chain.block_chain) ):
+			##do nothing
+			return 1
+			
+		elif(len(new_chain.block_chain)>len(self.chain.block_chain)):
+			self.chain = new_chain
+			##create new block to chain
+			#self.chain.block_chain.append(self.create_new_block(self.chain.block_chain[-1].index+1,self.chain.block_chain[-1].hash))
+			return 0
+			
 	def get_id_count(self):
 		return self.current_id_count

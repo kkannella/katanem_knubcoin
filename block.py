@@ -20,7 +20,8 @@ class Block:
 		self.listOfTransactions=[]
 		#no point to include the 2 below
 		self.nonce=0
-		self.hash=0
+		self.hash=None
+		self.hash_digest=""
 
 		
 	def myHash(self,noncea):
@@ -28,6 +29,8 @@ class Block:
 		self.hash=SHA.new((str(self.index)+str(self.previousHash)+str(self.timestamp)+str(self.nonce)).encode())
 		##self.hash=SHA.new((str(self.index)+str(self.previousHash)+str(self.timestamp)+str(self.nonce)+str(self.listOfTransactions)).encode())
 		#calculate self.hash this one must match difficulty params
+		self.hash_digest = self.hash.hexdigest()
+		
 		return self.hash
 
 	def add_transaction(self, transaction):

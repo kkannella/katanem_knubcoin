@@ -13,3 +13,15 @@ if __name__ == '__main__':
 	ra = requests.post(url='http://127.0.0.1:5000/create_transactiona',json=parameters)
 	result=ra.json()
 	print(result['comp'])
+	#parameters={'recipient_node':0,'amount':10}
+	#ra = requests.post(url='http://127.0.0.2:5000/create_transactiona',json=parameters)
+	#result=ra.json()
+	##print(result['comp'])
+	#parameters={'recipient_node':3,'amount':10}
+	#ra = requests.post(url='http://127.0.0.2:5000/create_transactiona',json=parameters)
+	#result=ra.json()
+	#print(result['comp'])
+	#parameters={'recipient_node':4,'amount':10}
+	#ra = requests.post(url='http://127.0.0.2:5000/create_transactiona',json=parameters)
+	#result=ra.json()
+	#print(result['comp'])
