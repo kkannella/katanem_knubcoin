@@ -33,7 +33,6 @@ class wallet:
 			#print("PRoblem :",itera[2])
 			if (str(itera[2])==str(self.address)):
 				balance= balance + itera[3]
-				print("FOUND ONE")
 		return balance
 			
 	def get_public_key(self):

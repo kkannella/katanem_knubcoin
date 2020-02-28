@@ -22,7 +22,7 @@ class Block:
 		self.nonce=0
 		self.hash=None
 		self.hash_digest=""
-
+		#self.prevhash_digest=prvHash.hexdigest()
 		
 	def myHash(self,noncea):
 		self.nonce=noncea

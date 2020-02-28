@@ -63,7 +63,14 @@ def get_block():
 	tempb= jsonpickle.encode(test_r)
 	response={'block':tempb}
 	return jsonify(response), 200
-
+	
+@app.route('/get_curr_block',methods=['GET'])
+def get_curr_block():
+	test_r=new_node.current_block
+	tempb= jsonpickle.encode(test_r)
+	response={'block':tempb}
+	return jsonify(response), 200
+	
 @app.route('/get_node',methods=['GET'])
 def get_node():
 	test_r=new_node
@@ -96,10 +103,12 @@ def add_block():
 		print("Valid block to be added")
 		new_node.chain.add_block_to_chain(block_to_add)
 		##create new block to chain
-		new_node.chain.block_chain.append(new_node.create_new_block(block_to_add.index+1,block_to_add.hash))
+		#new_node.chain.block_chain.append(new_node.create_new_block(block_to_add.index+1,block_to_add.hash))
 	elif(validation==2):
 		print("Chain fork fix it")
-		new_node.resolve_conflicts()
+		#make new thread for resolve to avoid crashes
+		start_new_thread(new_node.resolve_conflicts,())
+		#new_node.resolve_conflicts()
 	elif(validation==3):
 		print("Hacker attempt")
 	response={'comp':1}
@@ -124,10 +133,8 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
-		temp_bloc=new_node.add_transaction_to_block(transactionb,new_block,4)
-		#new_block = temp_bloc
-		#new_node.add_transaction_to_block(transactionb,new_node.chain.block_chain[-1],4)
-		print("VALID",temp_bloc)	
+		new_node.add_transaction_to_block(transactionb,new_node.current_block,4)
+		print("VALID")	
 	response={'comp':1}
 	return jsonify(response), 200
 	
@@ -248,7 +255,7 @@ if __name__ == '__main__':
 		new_node.chain.add_block_to_chain(gen_block)
 		print("finished gen block")
 		##make second block
-		new_block=new_node.create_new_block(2,None) #using 1 as a random noncea to calculate hash of gen block
+		new_node.current_block=new_node.create_new_block(2,"") #using 1 as a random noncea to calculate hash of gen block
 		#new_node.chain.add_block_to_chain(new_block)
 
 	else:
@@ -256,7 +263,7 @@ if __name__ == '__main__':
 		#pass ip as param
 		new_wallet=wallet.wallet(ip)
 		new_node.wallet=new_wallet
-		new_block=new_node.create_new_block(2,None)
+		new_node.current_block=new_node.create_new_block(2,"")
 		public_key_string=new_wallet.get_public_key().exportKey("PEM")
 		#print(public_key_string)
 		#original_key=RSA.importKey(public_key_string)

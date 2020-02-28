@@ -40,7 +40,7 @@ class node:
 		self.unique_id=31
 		self.wallet=None
 		self.chain=None
-		#self.NBCs
+		self.current_block=None
 		self.UTXO = []
 		self.current_id_count=0
 		self.ring_id=[] #make new list we will add nodes later
@@ -120,15 +120,14 @@ class node:
 		return False
 
 	def add_transaction_to_block(self,transaction,block,capacity):
-		new_new_block = None
 		#if enough transactions mine
 		block.add_transaction(transaction)
 		if(len(block.listOfTransactions)==capacity):
 			#spawn thread to mine block
-			#start_new_thread(miner_job,(block)) 
+			#start_new_thread(miner_job,(block,)) 
 			#ama den gini me thread isos kalitera?
 			self.mine_block(block,1)
-			new_new_block = new_node.create_new_block(block.index+1,block.hash)	
+			self.current_block = self.create_new_block(block.index+1,block.hash_digest)	
 		##validate_lock.release() ##lock to serialize transactions
 		return 1
 
@@ -160,7 +159,7 @@ class node:
 		prvHash=block.previousHash
 		myHashStr=block.hash_digest
 		print("Printg prevhash :",prvHash)
-		prvhash2=blockchainlist[-1].hash
+		prvhash2=blockchainlist[-1].hash_digest
 		print("Printg prevhash2 :",prvhash2)
 		if((prvHash==prvhash2) and (myHashStr.startswith('0' * difficulty))):
 			return 1 #valid block
@@ -186,13 +185,10 @@ class node:
 			temp_chain=result['chain']
 			new_chain = jsonpickle.decode(temp_chain)
 		if(len(new_chain.block_chain)==len(self.chain.block_chain) ):
-			##do nothing
 			return 1
 			
 		elif(len(new_chain.block_chain)>len(self.chain.block_chain)):
 			self.chain = new_chain
-			##create new block to chain
-			#self.chain.block_chain.append(self.create_new_block(self.chain.block_chain[-1].index+1,self.chain.block_chain[-1].hash))
 			return 0
 			
 	def get_id_count(self):
