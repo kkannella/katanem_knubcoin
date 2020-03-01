@@ -102,10 +102,11 @@ def add_block():
 	if(validation==1):
 		print("Valid block to be added")
 		new_node.chain.add_block_to_chain(block_to_add)
-		##create new block to chain
-		#new_node.chain.block_chain.append(new_node.create_new_block(block_to_add.index+1,block_to_add.hash))
+		#Run actual transactions
+		new_node.run_block_transactions(block_to_add)
 	elif(validation==2):
 		print("Chain fork fix it")
+		##block_to_add is  orphan and discarded?
 		#make new thread for resolve to avoid crashes
 		start_new_thread(new_node.resolve_conflicts,())
 		#new_node.resolve_conflicts()
@@ -133,7 +134,7 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
-		new_node.add_transaction_to_block(transactionb,new_node.current_block,4)
+		new_node.add_transaction_to_block(transactionb,new_node.current_block,1)
 		print("VALID")	
 	response={'comp':1}
 	return jsonify(response), 200
@@ -187,26 +188,16 @@ def register_node():
 	addr=input_json['address']
 	pubk=input_json['public_key']
 	port=input_json['port']
-	
-	
-	#original_key=RSA.importKey(pubk.encode('ascii'))
-	
+		
 	##add check function for params
-
 	new_node.current_id_count=new_node.get_id_count()+1
 	chain=new_node.chain
 	##add node to ring with idc
 	idc=new_node.get_id_count()
 	new_node.register_node_to_ring(idc,addr,port,pubk)
 	response={'id_count':idc}
-	
 	##broadcast ring list with thread function
 	start_new_thread(b_cast,(new_node.ring_ip,new_node.ring_port,addr))
-	
-	
-	
-	#welcome_trans=transaction.Transaction(ip,new_wallet.private_key,addr,100)
-	
 	return jsonify(response), 200
 
 
@@ -248,8 +239,8 @@ if __name__ == '__main__':
 		#gen_trans=new_node.create_transaction()
 		gen_trans=transaction.Transaction(ip,new_wallet.private_key,ip,500)
 		new_node.UTXO.append((new_node.unique_id , gen_trans.transaction_id_digest , gen_trans.recipient_address , gen_trans.amount ))
-		##100 capacity temp
-		new_node.add_transaction_to_block(gen_trans,gen_block,4)
+		##100 capacity temp for gen block
+		new_node.add_transaction_to_block(gen_trans,gen_block,100)
 		#add block to blockchain as its finished , 100 is block capacity
 		print("Adding first block to bchain")
 		new_node.chain.add_block_to_chain(gen_block)

@@ -17,7 +17,7 @@ from flask_cors import CORS
 from _thread import *
 import threading
 validate_lock = threading.Lock()
-#chain_lock = threading.Lock()
+transaction_lock = threading.Lock()
 
 ##-----thread functions
 def b_cast_t(ip_list,port_list,transa):
@@ -48,7 +48,8 @@ class node:
 		self.ring_port=[]
 		self.ring_public_key=[]
 		self.ring_balance=[]
-		#slef.ring[]   #here we store information for every node, as its id, its address (ip:port) its public key and its balance
+		self.completed_transactions=[] #list of transaction_id_digest
+		self.utxo_lock = threading.Lock()
 	
 	def create_new_block(self,index,prvHash):
 		return block.Block(index,prvHash)
@@ -70,7 +71,8 @@ class node:
 		new_trans=transaction.Transaction(sender_address,sender_private_key,recipient_address,value)
 		#remember to broadcast it
 		self.broadcast_transaction(new_trans)
-
+		return 1
+		
 	def broadcast_transaction(self,transaction):
 		print("Broadcasting Transaction")
 		##Send post requests to all nodes
@@ -91,34 +93,47 @@ class node:
 		if (not(verified)):
 			validate_lock.release()
 			return False
+		##Search if transaction already happened
+		
+		for trans_iter in self.completed_transactions:
+			if(transaction.transaction_id_digest == trans_iter.transaction_id_digest):
+				##duplicate transaction 
+				validate_lock.release()
+				return False
+					
 		##search UTXO for the transaction inputs
 		total_available = 0
 		to_delete=[]
-		for utxo_iter in  (self.UTXO):
+		 # either self.UTXO if new block  or current_block.created_utxo
+		if (len(self.current_block.created_utxo)==0):
+			for utxo_iter in  (self.UTXO):
+				self.current_block.created_utxo.append(utxo_iter)		
+		# or current_block.created_utxo if alreaddy new block
+		for utxo_iter in (self.current_block.created_utxo):
 			if (utxo_iter[2]==transaction.sender_address):
 				total_available = total_available + utxo_iter[3]
-				to_delete.append(utxo_iter)
+				to_delete.append(utxo_iter)#utxos used used by this block
+				#self.current_block.created_utxo.remove(utxo_iter) #utxos used used by this block
 				if(total_available >= transaction.amount):
 					break
+			
 		if(total_available >= transaction.amount):
-			##delete used utxos 
-			for utxo_iter in (to_delete):
-				self.UTXO.remove(utxo_iter)
-			##create UTXOs
-			if(total_available > transaction.amount):
-				resta = total_available-transaction.amount
+			resta = total_available-transaction.amount
+			if(resta>0):
 				self.unique_id=self.unique_id+1
-				self.UTXO.append((self.unique_id,transaction.transaction_id_digest,transaction.sender_address,resta))
-			else:
-				resta=0
+				self.current_block.created_utxo.append((self.unique_id,transaction.transaction_id_digest,transaction.sender_address,resta))
 			self.unique_id=self.unique_id+1
-			self.UTXO.append((self.unique_id,transaction.transaction_id_digest,transaction.recipient_address,transaction.amount))
-			validate_lock.release() ##lock to serialize transactions
-			return True
-		
+			self.current_block.created_utxo.append((self.unique_id,transaction.transaction_id_digest,transaction.recipient_address,transaction.amount))	
+			##actually delete utxos
+			for utxo_iter in to_delete:	
+				self.current_block.created_utxo.remove(utxo_iter)
+				
+		else:
+			validate_lock.release()
+			return False	
 		validate_lock.release()
-		return False
-
+		return True
+		
 	def add_transaction_to_block(self,transaction,block,capacity):
 		#if enough transactions mine
 		block.add_transaction(transaction)
@@ -137,12 +152,7 @@ class node:
 		while (not(block.myHash(trynonce).hexdigest().startswith('0'* difficulty)) ):
 			trynonce = trynonce + 1
 		print("Block mined")
-		##add broadcast block
-		#self.broadcast_block(block)
 		start_new_thread(self.broadcast_block,(block,))
-		print("Broadcasted")
-		##create new block to chain
-		##self.chain.block_chain.append(self.create_new_block(block.index+1,block.hash))
 		return 1
 
 
@@ -167,7 +177,6 @@ class node:
 			return 2 #invalid block due to change in chain
 		else:
 			return 3 #invalid due to errors
-	#concencus functions
 
 	def valid_chain(self, chain,difficulty):
 		mychain=chain.block_chain
@@ -184,12 +193,33 @@ class node:
 			result=req_chain.json()
 			temp_chain=result['chain']
 			new_chain = jsonpickle.decode(temp_chain)
-		if(len(new_chain.block_chain)==len(self.chain.block_chain) ):
-			return 1
+			##acquire lock on chain struct !!!!
+			self.utxo_lock.acquire()
+			if (len(new_chain.block_chain)>len(self.chain.block_chain)):
+				#copy state from the new chain
+				self.UTXO = []
+				self.UTXO = new_chain.block_chain[-1].created_utxo.copy()
+				self.chain.block_chain = new_chain.block_chain.copy()
+			self.utxo_lock.release()	
+		return 0
 			
-		elif(len(new_chain.block_chain)>len(self.chain.block_chain)):
-			self.chain = new_chain
-			return 0
-			
+	def run_block_transactions(self, block):
+		##search  for the transaction inputs
+		validate_lock.acquire()
+		self.utxo_lock.acquire()
+		self.UTXO=[]
+		#add transactions to completed pool
+		for tran_iter in block.listOfTransactions: 
+			self.completed_transactions.append(tran_iter)
+		#manage utxos to respect new order
+		#for utxo_iter in (block.used_utxo):
+			#pezi na ine kai ola edo
+			#self.UTXO.remove(utxo_iter)
+			##problem arises if new_block has started to be filled?
+		for utxo_iter in (block.created_utxo):
+			self.UTXO.append(utxo_iter)
+		validate_lock.release()
+		self.utxo_lock.release()
+		return 0			
 	def get_id_count(self):
 		return self.current_id_count

@@ -18,6 +18,8 @@ class Block:
 		self.previousHash=prvHash
 		self.timestamp=time.time()
 		self.listOfTransactions=[]
+		self.used_utxo=[]
+		self.created_utxo=[]
 		#no point to include the 2 below
 		self.nonce=0
 		self.hash=None

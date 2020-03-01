@@ -9,11 +9,12 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 		
 if __name__ == '__main__':
-	ra = requests.get(url='http://127.0.0.1:5000/get_curr_block')
+	ra = requests.get(url='http://127.0.0.2:5000/get_curr_block')
 	result=ra.json()
 	block=result['block']
 	tempa= jsonpickle.decode(block)
 	blockaki=tempa
 	print(blockaki.index)
 	for i in range (len(blockaki.listOfTransactions)):
-		print(blockaki.listOfTransactions[i].recipient_address)
+		print(blockaki.listOfTransactions[i].sender_address," --> ",blockaki.listOfTransactions[i].recipient_address," : ",blockaki.listOfTransactions[i].amount)
+
