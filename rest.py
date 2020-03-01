@@ -134,7 +134,7 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
-		new_node.add_transaction_to_block(transactionb,new_node.current_block,1)
+		new_node.add_transaction_to_block(transactionb,new_node.current_block,4)
 		print("VALID")	
 	response={'comp':1}
 	return jsonify(response), 200

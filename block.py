@@ -1,7 +1,8 @@
 import blockchain
 import time
 
-
+from _thread import *
+import threading
 import Crypto
 import Crypto.Random
 
@@ -24,9 +25,11 @@ class Block:
 		self.nonce=0
 		self.hash=None
 		self.hash_digest=""
+		self.block_lock=threading.Lock()
 		#self.prevhash_digest=prvHash.hexdigest()
 		
 	def myHash(self,noncea):
+		
 		self.nonce=noncea
 		self.hash=SHA.new((str(self.index)+str(self.previousHash)+str(self.timestamp)+str(self.nonce)).encode())
 		##self.hash=SHA.new((str(self.index)+str(self.previousHash)+str(self.timestamp)+str(self.nonce)+str(self.listOfTransactions)).encode())

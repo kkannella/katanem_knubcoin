@@ -41,6 +41,7 @@ class node:
 		self.wallet=None
 		self.chain=None
 		self.current_block=None
+		self.prev_block=None
 		self.UTXO = []
 		self.current_id_count=0
 		self.ring_id=[] #make new list we will add nodes later
@@ -49,7 +50,7 @@ class node:
 		self.ring_public_key=[]
 		self.ring_balance=[]
 		self.completed_transactions=[] #list of transaction_id_digest
-		self.utxo_lock = threading.Lock()
+		self.fat_lock = threading.Lock()
 	
 	def create_new_block(self,index,prvHash):
 		return block.Block(index,prvHash)
@@ -104,11 +105,18 @@ class node:
 		##search UTXO for the transaction inputs
 		total_available = 0
 		to_delete=[]
-		 # either self.UTXO if new block  or current_block.created_utxo
-		if (len(self.current_block.created_utxo)==0):
+		# either self.UTXO if new block  or current_block.created_utxo
+		#the magic starts with prev_block
+		if ((len(self.current_block.created_utxo)==0) and (self.prev_block==None)):
 			for utxo_iter in  (self.UTXO):
+				self.current_block.created_utxo.append(utxo_iter)
+		elif (len(self.current_block.created_utxo)==0):
+			#for utxo_iter in  (self.UTXO):
+			for utxo_iter in (self.prev_block.created_utxo):
 				self.current_block.created_utxo.append(utxo_iter)		
+		
 		# or current_block.created_utxo if alreaddy new block
+		
 		for utxo_iter in (self.current_block.created_utxo):
 			if (utxo_iter[2]==transaction.sender_address):
 				total_available = total_available + utxo_iter[3]
@@ -142,6 +150,7 @@ class node:
 			#start_new_thread(miner_job,(block,)) 
 			#ama den gini me thread isos kalitera?
 			self.mine_block(block,1)
+			self.prev_block = block
 			self.current_block = self.create_new_block(block.index+1,block.hash_digest)	
 		##validate_lock.release() ##lock to serialize transactions
 		return 1
@@ -194,19 +203,19 @@ class node:
 			temp_chain=result['chain']
 			new_chain = jsonpickle.decode(temp_chain)
 			##acquire lock on chain struct !!!!
-			self.utxo_lock.acquire()
+			self.fat_lock.acquire()
 			if (len(new_chain.block_chain)>len(self.chain.block_chain)):
 				#copy state from the new chain
 				self.UTXO = []
 				self.UTXO = new_chain.block_chain[-1].created_utxo.copy()
 				self.chain.block_chain = new_chain.block_chain.copy()
-			self.utxo_lock.release()	
+			self.fat_lock.release()	
 		return 0
 			
 	def run_block_transactions(self, block):
 		##search  for the transaction inputs
 		validate_lock.acquire()
-		self.utxo_lock.acquire()
+		self.fat_lock.acquire()
 		self.UTXO=[]
 		#add transactions to completed pool
 		for tran_iter in block.listOfTransactions: 
@@ -219,7 +228,7 @@ class node:
 		for utxo_iter in (block.created_utxo):
 			self.UTXO.append(utxo_iter)
 		validate_lock.release()
-		self.utxo_lock.release()
+		self.fat_lock.release()
 		return 0			
 	def get_id_count(self):
 		return self.current_id_count
