@@ -15,7 +15,7 @@ import time
 def node0_trans():
 	print("Active 0")
 	for i in range (5):
-		parameters={'recipient_node':i,'amount':1}
+		parameters={'recipient_node':i,'amount':100}
 		ra = requests.post(url='http://127.0.0.1:5000/create_transactiona',json=parameters)
 		result=ra.json()
 		print("node 0 did trans :", i , "result :",result['comp'])
@@ -23,7 +23,7 @@ def node0_trans():
 def node1_trans():
 	print("Active 1")
 	for i in range (5):
-		parameters={'recipient_node':i,'amount':1}
+		parameters={'recipient_node':i,'amount':100}
 		ra = requests.post(url='http://127.0.0.2:5000/create_transactiona',json=parameters)
 		result=ra.json()
 		print("node 1 did trans :", i , " result :",result['comp'])
@@ -31,7 +31,7 @@ def node1_trans():
 def node2_trans():
 	print("Active 2")
 	for i in range (5):
-		parameters={'recipient_node':i,'amount':1}
+		parameters={'recipient_node':i,'amount':100}
 		ra = requests.post(url='http://127.0.0.3:5000/create_transactiona',json=parameters)
 		result=ra.json()
 		print("node 2 did trans :", i , " result :",result['comp'])
@@ -39,7 +39,7 @@ def node2_trans():
 def node3_trans():
 	print("Active 3")
 	for i in range (5):
-		parameters={'recipient_node':i,'amount':1}
+		parameters={'recipient_node':i,'amount':100}
 		ra = requests.post(url='http://127.0.0.4:5000/create_transactiona',json=parameters)
 		result=ra.json()
 		print("node 3 did trans :", i , " result :",result['comp'])
@@ -47,7 +47,7 @@ def node3_trans():
 def node4_trans():
 	print("Active 4")
 	for i in range (5):
-		parameters={'recipient_node':i,'amount':1}
+		parameters={'recipient_node':i,'amount':100}
 		ra = requests.post(url='http://127.0.0.5:5000/create_transactiona',json=parameters)
 		result=ra.json()
 		print("node 4 did trans :", i , " result :",result['comp'])
@@ -62,5 +62,5 @@ if __name__ == '__main__':
 	start_new_thread(node4_trans,())
 
 	
-	time.sleep(40)
+	time.sleep(10)
 

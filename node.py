@@ -149,7 +149,7 @@ class node:
 			#spawn thread to mine block
 			#start_new_thread(miner_job,(block,)) 
 			#ama den gini me thread isos kalitera?
-			self.mine_block(block,1)
+			self.mine_block(block,4)
 			self.prev_block = block
 			self.current_block = self.create_new_block(block.index+1,block.hash_digest)	
 		##validate_lock.release() ##lock to serialize transactions

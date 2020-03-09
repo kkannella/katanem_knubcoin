@@ -98,9 +98,9 @@ def add_block():
 	temp_obj=input_json['block']
 	block_to_add= jsonpickle.decode(temp_obj)
 	##validate block
-	validation = new_node.validate_block(block_to_add,new_node.chain.block_chain,1)
+	validation = new_node.validate_block(block_to_add,new_node.chain.block_chain,4)
 	if(validation==1):
-		print("Valid block to be added")
+		print("~~~~~~~~~~~~~Valid block to be added~~~~~~~~~~~~~~")
 		new_node.chain.add_block_to_chain(block_to_add)
 		#Run actual transactions
 		new_node.run_block_transactions(block_to_add)
@@ -127,6 +127,17 @@ def create_transactiona():
 	return jsonify(response), 200
 
 
+@app.route('/create_transactiona_from_cli',methods=['POST'])
+def create_transactiona_from_cli():
+	input_json = request.get_json(force=True)
+	recipient=input_json['recipient_node']
+	amount=input_json['amount']
+	addra=recipient
+	##check is addra belongs to net 
+	new_node.create_transaction(ip,new_wallet.private_key,addra,amount)
+	response={'comp':1}
+	return jsonify(response), 200
+
 @app.route('/add_transaction',methods=['POST'])
 def add_transactions():
 	input_json = request.get_json(force=True)
@@ -134,7 +145,7 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
-		new_node.add_transaction_to_block(transactionb,new_node.current_block,4)
+		new_node.add_transaction_to_block(transactionb,new_node.current_block,1)
 		print("VALID")	
 	response={'comp':1}
 	return jsonify(response), 200
@@ -272,5 +283,5 @@ if __name__ == '__main__':
 		#print(original_key)
 		#if (new_wallet.get_public_key().encrypt("Hello".encode('ascii'),12)==original_key.encrypt("Hello".encode('ascii'),12)):
 		#	print("NAIII")
-
 	app.run(host=ip, port=port)
+	##app.run(host=ip, port=port, Threaded=True)
