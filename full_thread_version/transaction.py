@@ -8,7 +8,7 @@ import Crypto.Random
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-
+import time
 import requests
 from flask import Flask, jsonify, request, render_template
 
@@ -26,6 +26,8 @@ class Transaction:
         self.recipient_address=recipient_address
         #self.amount: το ποσό που θα μεταφερθεί
         self.amount=value
+        self.elapsed=time.time() ##time transaction created
+        self.finish=time.time()
         #self.transaction_id: το hash του transaction
         myid=(str(sender_address)+str(recipient_address)+str(value)+str(random.random())).encode()
         self.transaction_id=SHA.new(myid)

@@ -18,6 +18,7 @@ class Block:
 		self.index=index	
 		self.previousHash=prvHash
 		self.timestamp=time.time()
+		self.finish=time.time()
 		self.listOfTransactions=[]
 		self.used_utxo=[]
 		self.created_utxo=[]

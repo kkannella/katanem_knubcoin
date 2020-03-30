@@ -9,7 +9,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 		
 if __name__ == '__main__':
-	ra = requests.get(url='http://127.0.0.2:5000/get_curr_block')
+	ra = requests.get(url='http://127.0.0.1:5000/get_curr_block')
 	result=ra.json()
 	block=result['block']
 	tempa= jsonpickle.decode(block)

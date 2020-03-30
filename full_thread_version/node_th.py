@@ -7,7 +7,7 @@ from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Cipher import PKCS1_OAEP
-
+import time
 import jsonpickle
 
 import requests
@@ -101,9 +101,13 @@ class node:
 		to_delete=[]
 		# either self.UTXO if new block  or current_block.created_utxo
 		#the magic starts with prev_block
+		
+		#self.curr_block_lock.acquire()
+		
 		if ((len(self.current_block.created_utxo)==0) and (self.prev_block==None)):
 			for utxo_iter in  (self.UTXO):
 				self.current_block.created_utxo.append(utxo_iter)
+			
 		elif (len(self.current_block.created_utxo)==0):
 			for utxo_iter in (self.prev_block.created_utxo):
 				self.current_block.created_utxo.append(utxo_iter)		
@@ -131,19 +135,25 @@ class node:
 				
 		else:
 			validate_lock.release()
+			#self.curr_block_lock.acquire()
 			return False	
 		validate_lock.release()
+		#self.curr_block_lock.acquire()
 		return True
 		
 	def add_transaction_to_block(self,transaction,block,capacity):
 		#if enough transactions mine
-		self.curr_block_lock.acquire()
+		
+		#self.curr_block_lock.acquire()
+		validate_lock.acquire()
+		
 		self.current_block.add_transaction(transaction)
 		if(len(self.current_block.listOfTransactions)==capacity):
 			self.mine_block(self.current_block,4) ##difficulty 4
 			self.prev_block = self.current_block
 			self.current_block = self.create_new_block(self.prev_block.index+1,self.prev_block.hash_digest)	
-		self.curr_block_lock.release()	
+		validate_lock.release()
+		#self.curr_block_lock.release()	
 		return 1
 
 	def mine_block(self , block,difficulty):
@@ -166,27 +176,37 @@ class node:
 
 
 	def validate_block(self, block,blockchainlist,difficulty):
+		
 		prvHash=block.previousHash
 		myHashStr=block.hash_digest
+
 		self.fat_lock.acquire()
-		prvhash2=blockchainlist[-1].hash_digest
-		last_index=blockchainlist[-1].index
-		self.fat_lock.release()
-		while(last_index < block.index):
-			##do nothing 
-			self.fat_lock.acquire()
-			prvhash2=blockchainlist[-1].hash_digest
-			last_index=blockchainlist[-1].index
-			self.fat_lock.release()
-			if(last_index+1==block.index):
-				break
+		##read only operation 
+		prvhash2=self.chain.block_chain[-1].hash_digest
+		last_index=self.chain.block_chain[-1].index
+		#prvhash2=blockchainlist[-1].hash_digest
+		#last_index=blockchainlist[-1].index
 		if(block.index > last_index+1):
+			self.fat_lock.release()
 			return 3 #invalid due to chain phase
+			
+		elif(last_index+1 < block.index):
+			self.fat_lock.release()
+			validate_block(block,blockchainlist,difficulty)
+			return 1 #default return value
+		
 		if((prvHash==prvhash2) and (myHashStr.startswith('0' * difficulty))):
+			
+			self.run_block_transactions(block)
+			
+			#Run actual transactions	
+			self.fat_lock.release()
 			return 1 #valid block
 		elif ((prvHash!=prvhash2)):
+			start_new_thread(self.resolve_conflicts,())
 			return 2 #invalid block due to change in chain
-		else:
+		else:	
+			self.fat_lock.release()
 			return 3 #invalid due to errors
 
 	def valid_chain(self, chain,difficulty):
@@ -198,6 +218,7 @@ class node:
 
 	def resolve_conflicts(self):
 		#resolve correct chain
+		##happens inside fat lock
 		#request chain length from everyone
 		for i in range (len(self.ring_ip)):
 			req_chain= requests.get(url="http://"+ str(self.ring_ip[i]) + ":"+ str(self.ring_port[i]) +"/get_chain")
@@ -205,27 +226,29 @@ class node:
 			temp_chain=result['chain']
 			new_chain = jsonpickle.decode(temp_chain)
 			##acquire lock on chain struct !!!!
-			self.fat_lock.acquire()
+			#validate_lock.acquire()
+			
 			if (len(new_chain.block_chain)>len(self.chain.block_chain)):
 				#copy state from the new chain
 				self.UTXO = []
 				self.UTXO = new_chain.block_chain[-1].created_utxo.copy()
 				self.chain.block_chain = new_chain.block_chain.copy()
-			self.fat_lock.release()	
+			#svalidate_lock.release()
+		self.fat_lock.release()	
 		return 0
 			
 	def run_block_transactions(self, block):
 		##search  for the transaction inputs
-		#validate_lock.acquire()
-		self.fat_lock.acquire()
+		validate_lock.acquire()
 		self.UTXO=[]
+		self.chain.add_block_to_chain(block)
 		#add transactions to completed pool
-		for tran_iter in block.listOfTransactions: 
+		for tran_iter in block.listOfTransactions:
+			tran_iter.finish=time.time()
 			self.completed_transactions.append(tran_iter)
 		for utxo_iter in (block.created_utxo):
 			self.UTXO.append(utxo_iter)
-		#validate_lock.release()
-		self.fat_lock.release()
+		validate_lock.release()
 		return 0
 		
 					

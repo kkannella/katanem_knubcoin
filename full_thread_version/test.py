@@ -14,9 +14,19 @@ if __name__ == '__main__':
 	block=result['block']
 	tempa= jsonpickle.decode(block)
 	blockaki=tempa
+	total_time=0
+	total_list=[]
+	total_block_time=0
+	total_block_list=[]
 	for j in blockaki:
 		print("This block index is",j.index)
 		for i in range (len(j.listOfTransactions)):
 			print(j.listOfTransactions[i].sender_address," --> ",j.listOfTransactions[i].recipient_address," : ",j.listOfTransactions[i].amount)
-		
+			total_time=total_time + (j.listOfTransactions[i].finish - j.listOfTransactions[i].elapsed)
+			total_list.append(j.listOfTransactions[i].finish - j.listOfTransactions[i].elapsed)
+		total_block_time= total_block_time + (j.finish-j.timestamp)
+		total_block_list.append(j.finish-j.timestamp)
+	print("Average Time for transactions was:" , total_time / len(total_list))
+	print("Average Time for blocks was:" , total_block_time / len(total_block_list))
+	
 

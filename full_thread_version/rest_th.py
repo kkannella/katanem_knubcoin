@@ -29,6 +29,7 @@ def reg_th(param):
 	result=r.json()
 	new_node.current_id_count=result['id_count']
 	print(result['id_count'])
+	
 def b_cast(ip_list,port_list,addr):
 	##Add loop checking for status 200
 	time.sleep(2)
@@ -38,13 +39,15 @@ def b_cast(ip_list,port_list,addr):
 	
 	temp_obj2 = new_node.UTXO
 	temp_utxo = jsonpickle.encode(temp_obj2)
-	new_node.fat_lock.release()
+	
 	parameters={'ring_id':new_node.ring_id, 'ring_ip':new_node.ring_ip,'ring_port':new_node.ring_port,'ring_pubk':new_node.ring_public_key,'block_chain':temp_chain ,'UTXO':temp_utxo }
-
+	new_node.fat_lock.release()
+	
 	for i in range (len(ip_list)):
 		r_b_cast= requests.post(url="http://"+ str(ip_list[i]) + ":"+ str(port_list[i]) +"/apply_lists",json=parameters)
 		result=r_b_cast.json()
 	
+	#new_node.fat_lock.release()
 	##sent to new node coins
 	time.sleep(2)
 	
@@ -75,6 +78,7 @@ def get_node():
 
 @app.route('/get_chain',methods=['GET'])
 def get_chain():
+	
 	lengtha= new_node.chain
 	chaina= jsonpickle.encode(lengtha)
 	response={'chain':chaina}
@@ -87,6 +91,14 @@ def get_balance():
 	response={'balance':test_r}
 	return jsonify(response), 200
 
+	
+@app.route('/test_lock',methods=['GET'])
+def test_lock():
+	new_node.fat_lock.acquire()
+	new_node.fat_lock.release()
+	response={'lock':1}
+	return jsonify(response), 200
+
 @app.route('/add_block',methods=['POST'])
 def add_block():
 	input_json = request.get_json(force=True)
@@ -96,14 +108,13 @@ def add_block():
 	validation = new_node.validate_block(block_to_add,new_node.chain.block_chain,4)
 	if(validation==1):
 		print("~~~~~~~~~~~~~Valid block to be added~~~~~~~~~~~~~~")
-		new_node.chain.add_block_to_chain(block_to_add)
+		#new_node.run_block_transactions(block_to_add)
 		#Run actual transactions
-		new_node.run_block_transactions(block_to_add)
 	elif(validation==2):
 		print("Chain fork fix it")
 		##block_to_add is  orphan and discarded?
 		#make new thread for resolve to avoid crashes
-		start_new_thread(new_node.resolve_conflicts,())
+		#start_new_thread(new_node.resolve_conflicts,())
 		#new_node.resolve_conflicts()
 	elif(validation==3):
 		print("Hacker attempt")
@@ -140,7 +151,7 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
-		new_node.add_transaction_to_block(transactionb,new_node.current_block,4)
+		new_node.add_transaction_to_block(transactionb,new_node.current_block,4) ##CAPACITY
 		print("VALID")	
 	response={'comp':1}
 	return jsonify(response), 200
@@ -161,6 +172,7 @@ def register_node():
 	addr=input_json['address']
 	pubk=input_json['public_key']
 	port=input_json['port']
+	
 	new_node.fat_lock.acquire()
 	##add check function for params
 	new_node.current_id_count=new_node.get_id_count()+1
@@ -171,7 +183,9 @@ def register_node():
 	response={'id_count':idc}
 	##broadcast ring list with function
 	b_cast(new_node.ring_ip,new_node.ring_port,addr)
+	new_node.fat_lock.acquire()
 	new_node.create_transaction(ip,new_wallet.private_key,addr,100)
+	new_node.fat_lock.release()
 	return jsonify(response), 200
 
 
