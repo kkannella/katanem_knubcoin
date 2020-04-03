@@ -18,12 +18,13 @@ import blockchain
 import wallet
 import transaction
 import jsonpickle
-
+import copy
 apply_lock = threading.Lock()
 sync_lock = threading.Lock()
 #validate_lock = threading.Lock()
 app = Flask(__name__)
 CORS(app)
+
 def reg_th(param):
 	r = requests.post(url='http://127.0.0.1:5000/register_new_node',json=param)
 	result=r.json()
@@ -83,6 +84,16 @@ def get_chain():
 	chaina= jsonpickle.encode(lengtha)
 	response={'chain':chaina}
 	return jsonify(response), 200
+@app.route('/get_length_chain',methods=['GET'])
+def get_lentgh_chain():
+	
+	lengtha= len(new_node.chain.block_chain)
+	#chaina= jsonpickle.encode(lengtha)
+	response={'length	':lengtha}
+	return jsonify(response), 200
+
+
+
 	
 @app.route('/get_balance',methods=['GET'])
 def get_balance():
@@ -105,7 +116,7 @@ def add_block():
 	temp_obj=input_json['block']
 	block_to_add= jsonpickle.decode(temp_obj)
 	##validate block
-	validation = new_node.validate_block(block_to_add,new_node.chain.block_chain,4)
+	validation = new_node.validate_block(block_to_add,new_node.chain.block_chain,5)##difi
 	if(validation==1):
 		print("~~~~~~~~~~~~~Valid block to be added~~~~~~~~~~~~~~")
 		#new_node.run_block_transactions(block_to_add)
@@ -117,7 +128,9 @@ def add_block():
 		#start_new_thread(new_node.resolve_conflicts,())
 		#new_node.resolve_conflicts()
 	elif(validation==3):
-		print("Hacker attempt")
+		print("Invalid attempt")
+	elif(validation==4):
+		print("Index attempt")
 	response={'comp':1}
 	return jsonify(response), 200
 
@@ -151,7 +164,7 @@ def add_transactions():
 	transactionb= jsonpickle.decode(temp_trans)
 	##call verify
 	if(new_node.validate_transaction(transactionb)):
-		new_node.add_transaction_to_block(transactionb,new_node.current_block,4) ##CAPACITY
+		new_node.add_transaction_to_block(transactionb,new_node.current_block,1) ##CAPACITY
 		print("VALID")	
 	response={'comp':1}
 	return jsonify(response), 200
@@ -250,7 +263,6 @@ if __name__ == '__main__':
 		print("Starting gen block")
 
 		gen_block=new_node.create_new_block(0,1)
-		#gen_trans=new_node.create_transaction()
 		gen_trans=transaction.Transaction(ip,new_wallet.private_key,ip,500)
 		new_node.UTXO.append((new_node.unique_id , gen_trans.transaction_id_digest , gen_trans.recipient_address , gen_trans.amount ))
 		##100 capacity temp for gen block

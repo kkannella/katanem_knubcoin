@@ -19,19 +19,18 @@ parser.add_argument('-id', '--id', default='0', type=str, help='my id')
 args = parser.parse_args()
 my_id=args.id
 
-file_trs = open("transactions"+str(my_id)+".txt", "r")
-
+file_trs = open("transactions"+str(int(my_id)-1)+".txt", "r")
+itera=0
 for x in file_trs:
+	itera= itera + 1
 	#send from numba to i node monies
 	tokens = x.split()
 	recipient_id = int(tokens[0][-1]) 	
 	amount = int(tokens[1])
-	print(recipient_id)
-	print(amount)
 	parameters={'recipient_node':recipient_id,'amount':amount}
 	ra = requests.post(url='http://127.0.0.'+str(my_id)+':5000/create_transactiona',json=parameters)
 	result=ra.json()
-	print("node did trans : result :",result['comp'])
-	time.sleep(0.4)
+	print("node did trans : result :",itera)
+	#time.sleep(0.4)
 	
 file_trs.close()

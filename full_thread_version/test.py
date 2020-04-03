@@ -18,6 +18,9 @@ if __name__ == '__main__':
 	total_list=[]
 	total_block_time=0
 	total_block_list=[]
+	
+	start_time=blockaki[1].timestamp
+	finish_time = blockaki[-1].finish
 	for j in blockaki:
 		print("This block index is",j.index)
 		for i in range (len(j.listOfTransactions)):
@@ -26,7 +29,8 @@ if __name__ == '__main__':
 			total_list.append(j.listOfTransactions[i].finish - j.listOfTransactions[i].elapsed)
 		total_block_time= total_block_time + (j.finish-j.timestamp)
 		total_block_list.append(j.finish-j.timestamp)
+	total_time=finish_time - start_time
 	print("Average Time for transactions was:" , total_time / len(total_list))
-	print("Average Time for blocks was:" , total_block_time / len(total_block_list))
+	print("Average Time for blocks was:" , total_time / len(total_block_list))
 	
 
